@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import kr.bookworm.bookwormapp.entity.Book;
+import kr.bookworm.bookwormapp.entity.BookCategory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JacksonJsonParser;
@@ -32,12 +33,12 @@ public class APIController {
     private static final String AUTHORIZATION = "KakaoAK 594159c8cb7241e6fc93aeeef832c221";
 
     @GetMapping("/list")
-    public List<Book> searchList(@RequestParam String query) {
+    public List<Book> searchList(@RequestParam String query, @RequestParam BookCategory bookCategory) {
         String url = "https://dapi.kakao.com/v3/search/book";
 
         UriComponents builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("query", query)
-                .queryParam("target","title").build();
+                .queryParam("target",bookCategory.getValue()).build();
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(HttpHeaders.AUTHORIZATION, AUTHORIZATION);
@@ -60,7 +61,6 @@ public class APIController {
                 final Book book = mapper.convertValue(o, Book.class);
                 books.add(book);
             }
-
         }
 
         return books;
