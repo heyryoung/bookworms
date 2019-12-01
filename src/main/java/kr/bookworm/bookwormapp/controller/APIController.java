@@ -1,17 +1,11 @@
 package kr.bookworm.bookwormapp.controller;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import kr.bookworm.bookwormapp.domain.Book;
+import kr.bookworm.bookwormapp.entity.Book;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.json.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.json.GsonJsonParser;
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
@@ -23,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
@@ -35,7 +30,7 @@ public class APIController {
     private static final String AUTHORIZATION = "KakaoAK 594159c8cb7241e6fc93aeeef832c221";
 
     @GetMapping("/list")
-    public List<Object> searchList(@RequestParam String query) {
+    public List<Book> searchList(@RequestParam String query) {
         String url = "https://dapi.kakao.com/v3/search/book?target=title&query="+query;
 
 
@@ -45,7 +40,9 @@ public class APIController {
 
         final ResponseEntity<String> exchange = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
+
         List<Object> objectArrayList = new ArrayList<>();
+        List<Book> books = new ArrayList<>();
         if(exchange.getStatusCode() == HttpStatus.OK) {
             ObjectMapper mapper = new ObjectMapper();
             JacksonJsonParser jsonParser = new JacksonJsonParser();
@@ -54,13 +51,13 @@ public class APIController {
             Map<String, Object> stringObjectMap = jsonParser.parseMap(exchange.getBody());
             JsonElement documents = gson.toJsonTree(stringObjectMap.get("documents"));
             objectArrayList = jsonParser.parseList(documents.toString());
-
             for (Object o : objectArrayList) {
                 final Book book = mapper.convertValue(o, Book.class);
-                System.out.println("book = " + book);
+                books.add(book);
             }
+
         }
 
-        return objectArrayList;
+        return books;
     }
 }
