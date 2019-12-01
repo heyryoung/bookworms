@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,18 +33,21 @@ public class APIController {
 
     @GetMapping("/list")
     public List<Book> searchList(@RequestParam String query) {
-        String url = "https://dapi.kakao.com/v3/search/book?target=title&query="+query;
+        String url = "https://dapi.kakao.com/v3/search/book";
 
+        UriComponents builder = UriComponentsBuilder.fromHttpUrl(url)
+                .queryParam("query", query)
+                .queryParam("target","title").build();
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(HttpHeaders.AUTHORIZATION, AUTHORIZATION);
         HttpEntity<?> entity = new HttpEntity<>(headers);
 
-        final ResponseEntity<String> exchange = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        final ResponseEntity<String> exchange = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
 
-
-        List<Object> objectArrayList = new ArrayList<>();
+        List<Object> objectArrayList;
         List<Book> books = new ArrayList<>();
+
         if(exchange.getStatusCode() == HttpStatus.OK) {
             ObjectMapper mapper = new ObjectMapper();
             JacksonJsonParser jsonParser = new JacksonJsonParser();
