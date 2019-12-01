@@ -1,44 +1,43 @@
-package kr.bookworm.bookwormapp.controller;
+package kr.bookworm.bookwormapp.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import kr.bookworm.bookwormapp.entity.Book;
-import kr.bookworm.bookwormapp.entity.BookCategory;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-@RestController
-@Slf4j
-@RequestMapping("/api")
-public class APIController {
+@Service
+@RequiredArgsConstructor
+public class BookServiceImpl implements BookService{
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     private static final String AUTHORIZATION = "KakaoAK 594159c8cb7241e6fc93aeeef832c221";
 
-    @GetMapping("/list")
-    public List<Book> searchList(@RequestParam String query, @RequestParam BookCategory bookCategory) {
+    @Override
+    public List<Book> getAllBooks() {
+        return null;
+    }
+
+    @Override
+    public List<Book> getSearchedBooks(String query, String category) {
         String url = "https://dapi.kakao.com/v3/search/book";
 
         UriComponents builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("query", query)
-                .queryParam("target",bookCategory.getValue()).build();
+                .queryParam("target",category).build();
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(HttpHeaders.AUTHORIZATION, AUTHORIZATION);
@@ -62,7 +61,6 @@ public class APIController {
                 books.add(book);
             }
         }
-
         return books;
     }
 }
