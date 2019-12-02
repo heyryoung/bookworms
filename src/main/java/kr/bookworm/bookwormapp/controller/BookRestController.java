@@ -23,7 +23,9 @@ public class BookRestController {
     private final BookService bookService;
 
     @GetMapping("/list")
-    public List<Book> searchList(@RequestParam(required = false) String query, @RequestParam(required = false) BookSearchCategory bookSearchCategory) {
-        return bookService.getSearchedBooks(query, bookSearchCategory.getValue());
+    public List<Book> searchList(@RequestParam(required = false) String query,
+                                 @RequestParam(defaultValue = "1", required = false) int page,
+                                 @RequestParam(required = false) BookSearchCategory bookSearchCategory) {
+        return bookService.getSearchedBooks(query, page, bookSearchCategory.getValue());
     }
 }

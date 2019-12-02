@@ -8,5 +8,5 @@ public interface BookService {
 
     List<Book> getAllBooks();
 
-    List<Book> getSearchedBooks(String query, String category);
+    List<Book> getSearchedBooks(String query, int page, String category);
 }

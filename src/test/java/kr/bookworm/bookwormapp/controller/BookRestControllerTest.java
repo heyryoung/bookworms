@@ -20,7 +20,7 @@ class BookRestControllerTest {
 
     @Test
     public void sampleTest() throws Exception {
-        List<Book> books = bookRestController.searchList("프리렉", BookSearchCategory.PUBLISHER);
+        List<Book> books = bookRestController.searchList("프리렉", 3, BookSearchCategory.PUBLISHER);
         for (Book book : books) {
             log.info("book : {} ", book);
         }

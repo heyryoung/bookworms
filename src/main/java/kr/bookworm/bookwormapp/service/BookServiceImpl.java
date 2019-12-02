@@ -35,9 +35,10 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<Book> getSearchedBooks(String query, String category) {
+    public List<Book> getSearchedBooks(String query, int page, String category) {
         UriComponents builder = UriComponentsBuilder.fromHttpUrl(URL)
                 .queryParam("query", query)
+                .queryParam("page",page)
                 .queryParam("target", category).build();
 
         HttpEntity<?> entity = setAuthorizationHeaderHttpEntity(HttpHeaders.AUTHORIZATION, AUTHORIZATION);
