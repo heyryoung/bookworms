@@ -3,6 +3,7 @@ package kr.bookworm.bookwormapp.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import kr.bookworm.bookwormapp.entity.Book;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.json.JacksonJsonParser;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class BookServiceImpl implements BookService{
+public class BookServiceImpl implements BookService {
 
     private final RestTemplate restTemplate;
 
@@ -35,46 +36,46 @@ public class BookServiceImpl implements BookService{
 
     @Override
     public List<Book> getSearchedBooks(String query, String category) {
-        UriComponents builder = getUriComponents(query, category);
-        HttpEntity<?> entity = getHttpEntity();
+        UriComponents builder = UriComponentsBuilder.fromHttpUrl(URL)
+                .queryParam("query", query)
+                .queryParam("target", category).build();
+
+        HttpEntity<?> entity = setAuthorizationHeaderHttpEntity(HttpHeaders.AUTHORIZATION, AUTHORIZATION);
 
         final ResponseEntity<String> exchange = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
 
-        List<Book> books = new ArrayList<>();
-        if(exchange.getStatusCode() == HttpStatus.OK) {
-            ObjectMapper mapper = new ObjectMapper();
-            List<Object> bookObjects = getObjectArrayList(exchange);
+        List<Object> bookObjects = getObjectArrayList(exchange);
 
-            convertObjectToBook(books, mapper, bookObjects);
+        return convertObjectToBook(bookObjects);
+    }
+
+    private List<Book> convertObjectToBook(List<Object> bookObjects) {
+        List<Book> books = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+
+        for (Object o : bookObjects) {
+            final Book book = mapper.convertValue(o, Book.class);
+            books.add(book);
         }
         return books;
     }
 
-        private void convertObjectToBook(List<Book> books, ObjectMapper mapper, List<Object> bookObjects) {
-            for (Object o : bookObjects) {
-                final Book book = mapper.convertValue(o, Book.class);
-                books.add(book);
-            }
+    private List<Object> getObjectArrayList(ResponseEntity<String> exchange) {
+        JacksonJsonParser jsonParser = new JacksonJsonParser();
+        Gson gson = new Gson();
+        JsonElement documents = new JsonObject();
+
+        if (exchange.getStatusCode() == HttpStatus.OK) {
+            Map<String, Object> stringObjectMap = jsonParser.parseMap(exchange.getBody());
+            documents = gson.toJsonTree(stringObjectMap.get("documents"));
         }
 
-        private List<Object> getObjectArrayList(ResponseEntity<String> exchange) {
-                JacksonJsonParser jsonParser = new JacksonJsonParser();
-                Gson gson = new Gson();
+        return jsonParser.parseList(documents.toString());
+    }
 
-                Map<String, Object> stringObjectMap = jsonParser.parseMap(exchange.getBody());
-                JsonElement documents = gson.toJsonTree(stringObjectMap.get("documents"));
-                return jsonParser.parseList(documents.toString());
-        }
-
-        private HttpEntity<?> getHttpEntity() {
-            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            headers.add(HttpHeaders.AUTHORIZATION, BookServiceImpl.AUTHORIZATION);
-            return new HttpEntity<>(headers);
-        }
-
-        private UriComponents getUriComponents(String query, String category) {
-            return UriComponentsBuilder.fromHttpUrl(URL)
-                        .queryParam("query", query)
-                        .queryParam("target",category).build();
-        }
+    private HttpEntity<?> setAuthorizationHeaderHttpEntity(String key, String value) {
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add(key, value);
+        return new HttpEntity<>(headers);
+    }
 }
