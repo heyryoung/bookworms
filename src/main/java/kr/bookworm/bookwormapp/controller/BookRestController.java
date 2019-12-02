@@ -16,7 +16,7 @@ import java.util.*;
 
 @RestController
 @Slf4j
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class BookRestController {
 

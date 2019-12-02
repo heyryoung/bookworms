@@ -26,6 +26,8 @@ public class BookServiceImpl implements BookService{
 
     private static final String AUTHORIZATION = "KakaoAK 594159c8cb7241e6fc93aeeef832c221";
 
+    private static final String URL = "https://dapi.kakao.com/v3/search/book";
+
     @Override
     public List<Book> getAllBooks() {
         return null;
@@ -33,34 +35,46 @@ public class BookServiceImpl implements BookService{
 
     @Override
     public List<Book> getSearchedBooks(String query, String category) {
-        String url = "https://dapi.kakao.com/v3/search/book";
-
-        UriComponents builder = UriComponentsBuilder.fromHttpUrl(url)
-                .queryParam("query", query)
-                .queryParam("target",category).build();
-
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add(HttpHeaders.AUTHORIZATION, AUTHORIZATION);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        UriComponents builder = getUriComponents(query, category);
+        HttpEntity<?> entity = getHttpEntity();
 
         final ResponseEntity<String> exchange = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
 
-        List<Object> objectArrayList;
         List<Book> books = new ArrayList<>();
-
         if(exchange.getStatusCode() == HttpStatus.OK) {
             ObjectMapper mapper = new ObjectMapper();
-            JacksonJsonParser jsonParser = new JacksonJsonParser();
-            Gson gson = new Gson();
+            List<Object> bookObjects = getObjectArrayList(exchange);
 
-            Map<String, Object> stringObjectMap = jsonParser.parseMap(exchange.getBody());
-            JsonElement documents = gson.toJsonTree(stringObjectMap.get("documents"));
-            objectArrayList = jsonParser.parseList(documents.toString());
-            for (Object o : objectArrayList) {
+            convertObjectToBook(books, mapper, bookObjects);
+        }
+        return books;
+    }
+
+        private void convertObjectToBook(List<Book> books, ObjectMapper mapper, List<Object> bookObjects) {
+            for (Object o : bookObjects) {
                 final Book book = mapper.convertValue(o, Book.class);
                 books.add(book);
             }
         }
-        return books;
-    }
+
+        private List<Object> getObjectArrayList(ResponseEntity<String> exchange) {
+                JacksonJsonParser jsonParser = new JacksonJsonParser();
+                Gson gson = new Gson();
+
+                Map<String, Object> stringObjectMap = jsonParser.parseMap(exchange.getBody());
+                JsonElement documents = gson.toJsonTree(stringObjectMap.get("documents"));
+                return jsonParser.parseList(documents.toString());
+        }
+
+        private HttpEntity<?> getHttpEntity() {
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            headers.add(HttpHeaders.AUTHORIZATION, BookServiceImpl.AUTHORIZATION);
+            return new HttpEntity<>(headers);
+        }
+
+        private UriComponents getUriComponents(String query, String category) {
+            return UriComponentsBuilder.fromHttpUrl(URL)
+                        .queryParam("query", query)
+                        .queryParam("target",category).build();
+        }
 }
